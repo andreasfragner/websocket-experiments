@@ -9,7 +9,6 @@ a ray cluster
 """
 
 __author__ = "andreasfragner"
-__contributors__ = [__author__]
 
 import asyncio
 import logging
@@ -18,10 +17,9 @@ from typing import (Any, Awaitable, ByteString, Callable, Dict, Optional,
 
 import ray
 import websockets
-from websocket_experiments.common import (TaskExecutionError,
-                                          configure_logging, deserialize,
-                                          serialize)
 from websockets.server import WebSocketServer, WebSocketServerProtocol
+from wss_runtime.common import (TaskExecutionError, configure_logging,
+                                deserialize, serialize)
 
 logger = logging.getLogger()
 

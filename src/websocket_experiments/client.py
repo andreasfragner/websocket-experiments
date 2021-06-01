@@ -10,7 +10,6 @@ Usage ..code::
 """
 
 __author__ = "andreasfragner"
-__contributors__ = [__author__]
 
 import asyncio
 import logging

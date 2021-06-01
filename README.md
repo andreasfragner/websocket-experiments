@@ -1,5 +1,6 @@
-# websocket-experiments
+# wss-runtime
 
-Simple client-server architecture to experiment with websockets
+Simple client-server architecture to experiment with websockets and async remote execution
 
-Send arbitrary python functions over a websocket connection to a server for remote execution on a `ray` cluster.
+Implements a websocket server and a client for executing arbitrary python functions on a remote runtime (in this case a `ray` cluster)
+
