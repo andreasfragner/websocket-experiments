@@ -11,15 +11,15 @@ __contributors__ = [__author__]
 import logging
 from typing import Any, ByteString, Callable, Dict, Tuple
 
-import dill
+import cloudpickle
 
 
 def serialize(obj: Any) -> ByteString:
-    return dill.dumps(obj)
+    return cloudpickle.dumps(obj)
 
 
 def deserialize(payload: ByteString) -> Tuple[Callable, Tuple, Dict]:
-    return dill.loads(payload)
+    return cloudpickle.loads(payload)
 
 
 class TaskExecutionError(Exception):
