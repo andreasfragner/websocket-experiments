@@ -4,11 +4,20 @@
 """
 Summary
 -------
-Simple websocket server implementing a producer-consumer pattern to execute functions on
-a ray cluster
-"""
+Usage ..code::
 
-__author__ = "andreasfragner"
+    import ray, websockets
+    from wss_runtime.server import handler
+
+    ray.init(address=RAY_ADDRESS)
+
+    server = websockets.serve(
+        handler, WS_HOST, WS_PORT, max_size=WS_MAX_MESSAGE_SIZE
+    )
+    asyncio.get_event_loop().run_until_complete(server)
+    asyncio.get_event_loop().run_forever()
+
+"""
 
 import asyncio
 import logging
@@ -18,6 +27,7 @@ from typing import (Any, Awaitable, ByteString, Callable, Dict, Optional,
 import ray
 import websockets
 from websockets.server import WebSocketServer, WebSocketServerProtocol
+
 from wss_runtime.common import (TaskExecutionError, configure_logging,
                                 deserialize, serialize)
 
@@ -30,7 +40,6 @@ async def consumer(message: ByteString, queue: asyncio.Queue) -> None:
 
 
 async def producer(queue: asyncio.Queue) -> Any:
-    logger.info("Getting task for execution, %i items in queue", queue.qsize())
     fn, args, kwargs = await queue.get()
     func = ray.remote(fn)
     return await func.remote(*args, **kwargs)
@@ -40,9 +49,8 @@ async def consumer_handler(
     websocket: WebSocketServerProtocol, queue: asyncio.Queue
 ) -> None:
     async for message in websocket:
-        logger.info("Consuming message, %i items ahead in queue", queue.qsize())
+        logger.debug("Got message (queue: %i, client: %s)", queue.qsize(), websocket)
         await consumer(message, queue)
-        logger.info("Done consuming message")
 
 
 async def producer_handler(
@@ -52,18 +60,19 @@ async def producer_handler(
         try:
             result: Awaitable[Any] = await producer(queue)
         except Exception as ex:
-            logger.exception("Task execution failed")
+            logger.exception(
+                "Task execution failed, forwarding exception (client: %s)", websocket
+            )
             result = TaskExecutionError(str(ex))
 
-        logger.info("Got result from producer")
         message: ByteString = serialize(result)
         await websocket.send(message)
-        logger.info("Sent result to client")
+        logger.debug("Sent result (queue: %i, client: %s)", queue.qsize(), websocket)
 
 
 async def handler(websocket: WebSocketServerProtocol, path: Optional[str]) -> None:
 
-    queue: asyncio.Queue = asyncio.Queue()
+    queue: asyncio.Queue = asyncio.Queue()  # one queue per client to keep things simple
 
     consume: Awaitable = asyncio.ensure_future(consumer_handler(websocket, queue))
     produce: Awaitable = asyncio.ensure_future(producer_handler(websocket, queue))
@@ -78,6 +87,8 @@ async def handler(websocket: WebSocketServerProtocol, path: Optional[str]) -> No
 
 if __name__ == "__main__":
 
+    configure_logging(level="INFO")
+
     WS_HOST: str = "localhost"
     WS_PORT: int = 8765
     WS_MAX_MESSAGE_SIZE: Union[int, None] = None
@@ -88,16 +99,10 @@ if __name__ == "__main__":
 
     ray.init(address=RAY_ADDRESS)
 
-    # logger = logging.getLogger("websockets")
-    # logger.setLevel(logging.INFO)
-    # logger.addHandler(logging.StreamHandler())
-    configure_logging(level="INFO")
-
     server: WebSocketServer = websockets.serve(
         handler, WS_HOST, WS_PORT, max_size=WS_MAX_MESSAGE_SIZE
     )
 
     logger.info("Start server")
     asyncio.get_event_loop().run_until_complete(server)
-    logger.info("Running forever")
     asyncio.get_event_loop().run_forever()
