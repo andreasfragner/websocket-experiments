@@ -1,0 +1,20 @@
+repos:
+-   repo: https://github.com/psf/black
+    rev: 21.5b2
+    hooks:
+    - id: black
+      language_version: python3.8
+      args: [--check]
+-   repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.3.2
+    hooks:
+    - id: isort
+      language_version: python3.8
+      additional_dependencies: [toml]
+      args: [--check-only]
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.8.3
+    hooks:
+    - id: flake8
+      language_version: python3.8
+      args: [src/]
