@@ -4,10 +4,6 @@
 
 """
 
-__author__ = "andreasfragner"
-__contributors__ = [__author__]
-
-
 import logging
 from typing import Any, ByteString, Callable, Dict, Tuple
 

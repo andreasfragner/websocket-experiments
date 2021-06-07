@@ -21,15 +21,18 @@ Usage ..code::
 
 import asyncio
 import logging
-from typing import (Any, Awaitable, ByteString, Callable, Dict, Optional,
-                    Tuple, Union)
+from typing import Any, Awaitable, ByteString, Callable, Dict, Optional, Tuple, Union
 
 import ray
 import websockets
 from websockets.server import WebSocketServer, WebSocketServerProtocol
 
-from wss_runtime.common import (TaskExecutionError, configure_logging,
-                                deserialize, serialize)
+from wss_runtime.common import (
+    TaskExecutionError,
+    configure_logging,
+    deserialize,
+    serialize,
+)
 
 logger = logging.getLogger()
 
@@ -72,7 +75,7 @@ async def producer_handler(
 
 async def handler(websocket: WebSocketServerProtocol, path: Optional[str]) -> None:
 
-    queue: asyncio.Queue = asyncio.Queue()  # one queue per client to keep things simple
+    queue: asyncio.Queue = asyncio.Queue(maxsize=64)
 
     consume: Awaitable = asyncio.ensure_future(consumer_handler(websocket, queue))
     produce: Awaitable = asyncio.ensure_future(producer_handler(websocket, queue))
